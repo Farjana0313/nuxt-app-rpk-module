@@ -1,0 +1,26 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@utility text-* {
+  font-size: --value(--text- *, [24px]);
+  line-height: --modifier(--leading- *, [24px], [ *]);
+}
+
+.bg-white {
+  --tw-bg-opacity: 1;
+  background-color: #eef0fd;
+}
+.bg-blue-50 {
+  --tw-bg-opacity: 1;
+  background: linear-gradient(90deg, #e8eafb 0%, #c1c7f0 100%);
+}
+.py-3 {
+  padding-top: 1.75rem;
+  padding-bottom: 1.75rem;
+}
+
+.bg-off-white {
+  --tw-bg-opacity: 1;
+  background-color: #f8f9fa;
+}

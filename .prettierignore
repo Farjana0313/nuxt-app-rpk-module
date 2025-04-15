@@ -1,0 +1,9 @@
+.nuxt
+.build
+.output
+node_modules
+dist
+coverage
+.prettierrc
+.github
+.vscode
