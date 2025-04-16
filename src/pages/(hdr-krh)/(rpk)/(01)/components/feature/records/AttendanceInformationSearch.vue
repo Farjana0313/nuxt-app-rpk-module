@@ -22,12 +22,6 @@
                 <DxLabel template="Grade" />
             </DxItem>
         </DxForm>
-
-
-        <div class="flex justify-end mt-6 space-x-3">
-            <DxButton text="Reset" type="normal" stylingMode="outlined" @click="handleReset" :width="120" />
-            <DxButton text="Search" type="default" stylingMode="contained" @click="handleSearch" :width="120" />
-        </div>
     </div>
 </template>
 
@@ -36,31 +30,5 @@ import {
     DxForm, DxItem, DxLabel
 } from 'devextreme-vue/form';
 import DxButton, { type DxButtonTypes } from 'devextreme-vue/button';
-// // import { DxButton, DxSelectBox, DxTextBox } from 'devextreme-vue'
-// import { useEmployeeStore } from "@/stores/dataStore";
-// import DxButton from "devextreme-vue/button";
-// import DxSelectBox from "devextreme-vue/select-box";
-// import DxTextBox from "devextreme-vue/text-box";
-// import { ref } from "vue";
-// // Instantiate the store
-// const employeeStore = useEmployeeStore();
-// const { filterData, resetEmployees } = employeeStore; // Destructure the methods from the store
 
-// // Reactive state for inputs
-// const id = ref("");
-// const name = ref("");
-// const selectedDisplay = ref("Daily");
-// const displayOptions = ["Daily", "Weekly", "Monthly"];
-
-// Method to handle the search button click
-const handleSearch = () => {
-    filterData(name.value, id.value);
-};
-
-const handleReset = () => {
-    id.value = "";
-    name.value = "";
-    selectedDisplay.value = "Daily";
-    resetEmployees();
-};
 </script>
