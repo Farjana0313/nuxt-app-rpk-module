@@ -4,41 +4,49 @@
             <h2 class="text-2xl font-bold text-gray-800">Managing Competency Owner Attendance Record Entry</h2>
         </div>
 
-        <!-- DevExtreme Form -->
-        <DxForm :form-data="formData" :label-location="'top'" :col-count="2" class="mb-6">
-            <DxItem data-field="agencyDivision" :col-span="1">
-                <template #default>
-                    <DxTextBox v-model:value="formData.agencyDivision" :read-only="true" :label="'Agency/ Division'" />
-                </template>
-            </DxItem>
-            <DxItem data-field="number" :col-span="1">
-                <template #default>
-                    <DxTextBox v-model:value="formData.number" :read-only="true" :label="'Number'" />
-                </template>
-            </DxItem>
-            <DxItem data-field="noWhenIntroduction" :col-span="1">
-                <template #default>
-                    <DxTextBox v-model:value="formData.noWhenIntroduction" :read-only="true"
-                        :label="'Identity Card No.'" />
-                </template>
-            </DxItem>
-            <DxItem data-field="position" :col-span="1">
-                <template #default>
-                    <DxTextBox v-model:value="formData.position" :read-only="true" :label="'Position'" />
-                </template>
-            </DxItem>
-            <DxItem data-field="grade" :col-span="1">
-                <template #default>
-                    <DxTextBox v-model:value="formData.grade" :read-only="true" :label="'Grade'" />
-                </template>
-            </DxItem>
-        </DxForm>
+        <!-- Use standard HTML form elements instead of DevExtreme -->
+        <div class="grid grid-cols-2 gap-4 mb-6">
+            <div class="form-group">
+                <label class="block text-gray-700 text-sm font-bold mb-2">Agency/ Division</label>
+                <input type="text" v-model="formData.agencyDivision" readonly
+                    class="bg-gray-100 w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm">
+            </div>
+
+            <div class="form-group">
+                <label class="block text-gray-700 text-sm font-bold mb-2">Number</label>
+                <input type="text" v-model="formData.number" readonly
+                    class="bg-gray-100 w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm">
+            </div>
+
+            <div class="form-group">
+                <label class="block text-gray-700 text-sm font-bold mb-2">Identity Card No.</label>
+                <input type="text" v-model="formData.noWhenIntroduction" readonly
+                    class="bg-gray-100 w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm">
+            </div>
+
+            <div class="form-group">
+                <label class="block text-gray-700 text-sm font-bold mb-2">Position</label>
+                <input type="text" v-model="formData.position" readonly
+                    class="bg-gray-100 w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm">
+            </div>
+
+            <div class="form-group">
+                <label class="block text-gray-700 text-sm font-bold mb-2">Grade</label>
+                <input type="text" v-model="formData.grade" readonly
+                    class="bg-gray-100 w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm">
+            </div>
+        </div>
+
+        <!-- Debug info - remove after testing -->
+        <div class="mt-4 p-2 bg-gray-100 text-xs rounded">
+            <p>Debug information:</p>
+            <p>selectedOwner (props): {{ JSON.stringify(props.selectedOwner) }}</p>
+            <p>formData: {{ JSON.stringify(formData) }}</p>
+        </div>
     </div>
 </template>
 
 <script setup lang="ts">
-import { DxForm, DxItem } from 'devextreme-vue/form';
-import DxTextBox from 'devextreme-vue/text-box';
 import { onMounted, reactive, watch } from 'vue';
 
 // Define props for the component

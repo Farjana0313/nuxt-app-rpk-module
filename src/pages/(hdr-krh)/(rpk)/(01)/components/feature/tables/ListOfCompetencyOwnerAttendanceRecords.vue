@@ -1,7 +1,9 @@
 <template>
     <div class="my-12">
-        <DxDataGrid ref="dataGridRef" :data-source="dataSource" :show-borders="true" :key-expr="'was'">
-
+        <div v-if="dataSource.length === 0" class="text-center p-6 bg-gray-100 rounded-lg">
+            <p class="text-gray-600 font-medium">No attendance records found for this owner.</p>
+        </div>
+        <DxDataGrid v-else ref="dataGridRef" :data-source="dataSource" :show-borders="true" :key-expr="'was'">
             <DxExport :enabled="true" :allow-export-selected-data="true" />
 
             <DxToolbar>
