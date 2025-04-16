@@ -1,7 +1,7 @@
 <template>
     <div class="bg-white border border-gray-200 p-6 w-full max-w-4xl mx-auto mt-6 shadow-lg rounded-lg">
         <div class="flex items-center mb-6">
-            <h2 class="text-2xl font-bold text-gray-800">Competency Owner Search</h2>
+            <h2 class="text-2xl font-bold text-gray-800">Add New Competency Owner Attendance Records</h2>
 
         </div>
         <div class="option">
@@ -14,26 +14,66 @@
             <!-- <DxGroupItem colCount={2} colSpan={2} caption="Search Criteria" /> -->
 
             <DxItem data-field="name">
+                <DxLabel template="Number" />
+            </DxItem>
+            <DxItem data-field="name">
                 <DxLabel template="Identity Card No." />
             </DxItem>
+            <DxItem data-field="Position" editor-type="dxSelectBox">
+                <DxLabel template="Position" />
+            </DxItem>
+            <DxItem data-field="Grade" editor-type="dxSelectBox">
+                <DxLabel template="Grade" />
+            </DxItem>
+            <DxItem data-field="name">
+                <DxLabel template="Name of Division Administrative Officer" />
+            </DxItem>
+            <DxSimpleItem data-field="newStartDateTime" editor-type="dxDateBox"
+                :label="{ text: 'Date & Time of Entry to Work' }" :editor-options="{
+                    type: 'datetime',
+                    displayFormat: 'dd/MM/yyyy HH:mm',
+                    stylingMode: 'outlined',
+                }" :validation-rules="[{ type: 'required', message: 'Date & Time of Entry to Work' }]" />
+            <DxSimpleItem data-field="newStartDateTime" editor-type="dxDateBox" :label="{ text: 'Office Date & Time' }"
+                :editor-options="{
+                    type: 'datetime',
+                    displayFormat: 'dd/MM/yyyy HH:mm',
+                    stylingMode: 'outlined',
+                }" :validation-rules="[{ type: 'required', message: 'Office Date & Time' }]" />
+            <DxSimpleItem data-field="newStartDateTime" editor-type="dxDateBox"
+                :label="{ text: 'Office Re-Entry Date & Time' }" :editor-options="{
+                    type: 'datetime',
+                    displayFormat: 'dd/MM/yyyy HH:mm',
+                    stylingMode: 'outlined',
+                }" :validation-rules="[{ type: 'required', message: 'Office Re-Entry Date & Time' }]" />
+            <DxSimpleItem data-field="newStartDateTime" editor-type="dxDateBox"
+                :label="{ text: 'Office Return to Work Date & Time' }" :editor-options="{
+                    type: 'datetime',
+                    displayFormat: 'dd/MM/yyyy HH:mm',
+                    stylingMode: 'outlined',
+                }" :validation-rules="[{ type: 'required', message: 'Office Return to Work Date & Time' }]" />
+            <!-- File Upload -->
 
-            <DxSimpleItem
-              data-field="newStartDateTime"
-              editor-type="dxDateBox"
-              :label="{ text: 'Attendance System Data Date' }"
-              :editor-options="{
-                type: 'datetime',
-                displayFormat: 'dd/MM/yyyy HH:mm',
-                stylingMode: 'outlined',
-              }"
-              :validation-rules="[{ type: 'required', message: 'Attendance System Data Date' }]"
-            />
+            <DxFileUploader> </DxFileUploader>
+            <DxSimpleItem data-field="file" editor-type="dxFileUploader" :editor-options="{
+                selectButtonText: 'Select file',
+                uploadButtonText: 'Upload file',
+                showFileList: true,
+                multiple: false,
+                accept: 'image/*',
+                uploadMode: 'useButtons',
+                uploadUrl: '/api/upload',
+                onUploaded: handleUploadSuccess,
+            }" />
+            
         </DxForm>
 
 
         <div class="flex justify-end mt-6 space-x-3">
-            <DxButton text="Reset" type="normal" stylingMode="outlined" @click="handleReset" :width="120" />
-            <DxButton text="Search" type="default" stylingMode="contained" @click="handleSearch" :width="120" />
+            <DxButton text="Save" type="default" stylingMode="contained" @click="handleSearch" :width="120" />
+            <DxButton text="Cancel" type="normal" stylingMode="outlined" @click="handleReset" :width="120" />
+            
+            <DxButton text="Return" type="normal" stylingMode="outlined" @click="handleSearch" :width="120" />
         </div>
     </div>
 </template>
@@ -43,8 +83,9 @@ import {
     DxForm, DxItem, DxLabel, DxSimpleItem
 } from 'devextreme-vue/form';
 import DxButton, { type DxButtonTypes } from 'devextreme-vue/button';
-
+import { DxFileUploader } from 'devextreme-vue/file-uploader';
 import DxSelectBox from 'devextreme-vue/select-box';
+import DxRadioGroup from 'devextreme-vue/radio-group';
 // // import { DxButton, DxSelectBox, DxTextBox } from 'devextreme-vue'
 // import { useEmployeeStore } from "@/stores/dataStore";
 // import DxButton from "devextreme-vue/button";
