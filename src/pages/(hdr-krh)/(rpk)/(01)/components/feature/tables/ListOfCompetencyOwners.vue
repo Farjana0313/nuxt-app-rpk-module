@@ -32,7 +32,7 @@
 
       <template #actionTemplate="cellData">
         <div class="flex gap-2">
-          <button class="text-blue-500 hover:text-blue-700" @click="handleViewClick(cellData)">View</button>
+          <button class="text-blue-500 hover:text-blue-700" @click="() => handleViewClick(cellData)">View</button>
         </div>
       </template>
     </DxDataGrid>
@@ -65,29 +65,38 @@ const owners = computed(() => ownerStore.owners);
 const emit = defineEmits(['view-attendance']);
 
 // Function to handle view button click
-const handleViewClick = (data) => {
-  console.log("Raw data from DataGrid:", data);
+const handleViewClick = (cellData) => {
+  console.log("Raw data from DataGrid:", cellData);
 
-  // In DevExtreme DataGrid, the row data can be accessed in different ways
-  // Try various paths to find the actual data
+  // In DevExtreme DataGrid, the data structure can vary
   let owner = null;
 
-  if (data && data.data) {
-    // Most common case: cellData.data contains the row data
-    owner = data.data;
-  } else if (data && typeof data === 'object') {
-    // Sometimes the data might be directly in the object
-    owner = data;
+  // From the error message, we can see cellData has data.data structure
+  if (cellData && cellData.data && cellData.data.was) {
+    // Direct access to the data property
+    owner = cellData.data;
+  } else if (cellData && cellData.row && cellData.row.data) {
+    // Access through the row property
+    owner = cellData.row.data;
+  } else if (cellData && cellData.data && cellData.data.data) {
+    // Nested data structure
+    owner = cellData.data.data;
   } else {
-    console.error("Could not extract owner data from grid event", data);
+    console.error("Could not extract owner data from grid event", cellData);
     return;
   }
 
   console.log("Extracted owner data:", owner);
 
+  // Make sure we have the required data - specifically was
+  if (!owner || typeof owner.was === 'undefined') {
+    console.error("Invalid owner data - missing was property", owner);
+    return;
+  }
+
   // Create a clean object with just the properties we need
   const cleanOwner = {
-    was: owner.was || 0,
+    was: owner.was,
     agencyDivision: owner.agencyDivision || 'Unknown Division',
     number: owner.number || 'Unknown Number',
     noWhenIntroduction: owner.noWhenIntroduction || 'Unknown ID',
@@ -97,25 +106,8 @@ const handleViewClick = (data) => {
 
   console.log("Clean owner data to emit:", cleanOwner);
 
-  // Test if we're getting real data - if not, use fallback test data
-  if (!cleanOwner.agencyDivision || cleanOwner.agencyDivision === 'Unknown Division') {
-    // Fallback to test data if we can't get real data
-    console.warn("Using test data because real data wasn't found");
-    const testOwner = {
-      was: 10248,
-      agencyDivision: "IT Department",
-      number: "CP-2023-001",
-      noWhenIntroduction: "January 2023",
-      position: 1,
-      grade: "Senior"
-    };
-
-    // Emit event to parent component with the test data
-    emit('view-attendance', testOwner);
-  } else {
-    // Emit event to parent component with the clean owner data
-    emit('view-attendance', cleanOwner);
-  }
+  // Emit event to parent component with the clean owner data
+  emit('view-attendance', cleanOwner);
 };
 
 const dataGridRef = ref(null);

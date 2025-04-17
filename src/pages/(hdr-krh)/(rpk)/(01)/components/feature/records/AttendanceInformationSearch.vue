@@ -60,13 +60,14 @@ const formData = reactive({
 
 // Initialize form data with props.selectedOwner immediately
 const initFormData = () => {
-    console.log('Initializing form data with:', props.selectedOwner);
+    console.log('Initializing form data with:', JSON.stringify(props.selectedOwner));
     if (props.selectedOwner) {
         formData.agencyDivision = props.selectedOwner.agencyDivision || '';
         formData.number = props.selectedOwner.number || '';
         formData.noWhenIntroduction = props.selectedOwner.noWhenIntroduction || '';
         formData.position = props.selectedOwner.position?.toString() || '';
         formData.grade = props.selectedOwner.grade || '';
+        console.log('Form data after initialization:', JSON.stringify(formData));
     }
 };
 

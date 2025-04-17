@@ -3,6 +3,15 @@
         <div class="flex items-center mb-6">
             <h2 class="text-2xl font-bold text-gray-800">{{ formTitle }}</h2>
         </div>
+
+        <!-- Debug info - remove in production -->
+        <div v-if="false" class="bg-gray-100 p-4 mb-4 rounded text-xs">
+            <p>View Only: {{ props.viewOnly }}</p>
+            <p>Edit Mode: {{ props.editMode }}</p>
+            <p>Edit Data Present: {{ !!props.editData }}</p>
+            <p>Form Data Sample: {{ formData.number }}, {{ formData.getToWork }}</p>
+        </div>
+
         <div class="option mb-4">
             <span>Agency/ Division</span>
             <DxSelectBox :items="agencyDivisions" :input-attr="{ 'aria-label': 'Agency/ Division' }"
@@ -82,7 +91,6 @@
 
 <script setup lang="ts">
 import { useOwnerStore } from '@/stores/Owner/ownerStore';
-import type { CompetencyOwner } from '@/stores/Owner/types/types';
 import DxButton from 'devextreme-vue/button';
 import {
     DxForm, DxItem, DxLabel, DxSimpleItem
@@ -137,6 +145,12 @@ const formData = ref({
 
 // Reset form to defaults
 const resetForm = () => {
+    console.log('Resetting form to defaults');
+
+    // Get current date for setting default values
+    const now = new Date();
+
+    // Set default values for all form fields
     formData.value = {
         number: '',
         identityCardNo: '',
@@ -144,14 +158,16 @@ const resetForm = () => {
         grade: 'Junior',
         officerName1: '',
         officerName2: '',
-        getToWork: new Date(),
-        outOfOffice: new Date(new Date().setHours(new Date().getHours() + 4)),
-        reEnterOffice: new Date(new Date().setHours(new Date().getHours() + 5)),
-        backToWork: new Date(new Date().setHours(new Date().getHours() + 8)),
+        getToWork: now,
+        outOfOffice: new Date(now.getTime() + 4 * 60 * 60 * 1000), // +4 hours
+        reEnterOffice: new Date(now.getTime() + 5 * 60 * 60 * 1000), // +5 hours
+        backToWork: new Date(now.getTime() + 8 * 60 * 60 * 1000), // +8 hours
         noWhenIntroduction: '',
         agencyDivision: 'IT Department',
         file: null
     };
+
+    console.log('Form reset complete. New values:', formData.value);
 };
 
 // Options for select boxes
@@ -173,7 +189,38 @@ const grades = ['Junior', 'Mid-level', 'Senior'];
 
 // Watch for changes to editData prop
 watch(() => props.editData, (newValue) => {
+    console.log('editData changed:', newValue);
+    console.log('In edit mode:', props.editMode);
+    console.log('In view only mode:', props.viewOnly);
+
+    if (newValue === null) {
+        console.log('editData is null, this is a new record. Resetting form...');
+        resetForm();
+        return;
+    }
+
     if (newValue && (props.editMode || props.viewOnly)) {
+        console.log('Filling form with edit data...');
+
+        // Helper function to convert date strings to Date objects
+        const toDateObject = (dateStr) => {
+            if (!dateStr) return null;
+
+            try {
+                // Handle both ISO format and custom format
+                const date = new Date(dateStr);
+                if (!isNaN(date.getTime())) {
+                    console.log(`Converted ${dateStr} to date: ${date}`);
+                    return date;
+                }
+                console.warn(`Failed to parse date: ${dateStr}`);
+                return null;
+            } catch (err) {
+                console.error(`Error parsing date ${dateStr}:`, err);
+                return null;
+            }
+        };
+
         // Fill the form with the edit data
         formData.value = {
             ...formData.value,
@@ -183,17 +230,33 @@ watch(() => props.editData, (newValue) => {
             grade: newValue.grade || 'Junior',
             officerName1: newValue.officerName1 || '',
             officerName2: newValue.officerName2 || '',
-            getToWork: newValue.getToWork ? new Date(newValue.getToWork) : null,
-            outOfOffice: newValue.outOfOffice ? new Date(newValue.outOfOffice) : null,
-            reEnterOffice: newValue.reEnterOffice ? new Date(newValue.reEnterOffice) : null,
-            backToWork: newValue.backToWork ? new Date(newValue.backToWork) : null,
+            getToWork: toDateObject(newValue.getToWork),
+            outOfOffice: toDateObject(newValue.outOfOffice),
+            reEnterOffice: toDateObject(newValue.reEnterOffice),
+            backToWork: toDateObject(newValue.backToWork),
             noWhenIntroduction: newValue.noWhenIntroduction || '',
             agencyDivision: newValue.agencyDivision || 'IT Department'
         };
+
+        console.log('Form data after filling:', formData.value);
     } else if (!props.editMode && !props.viewOnly) {
+        console.log('Resetting form for new entry');
         // Reset the form for new entries
         resetForm();
     }
+}, { immediate: true });
+
+// Watch for changes to viewOnly and editMode props
+watch(() => props.viewOnly, (newValue) => {
+    console.log('viewOnly changed to:', newValue);
+    console.log('editMode is:', props.editMode);
+    console.log('editData is:', props.editData);
+}, { immediate: true });
+
+watch(() => props.editMode, (newValue) => {
+    console.log('editMode changed to:', newValue);
+    console.log('viewOnly is:', props.viewOnly);
+    console.log('editData is:', props.editData);
 }, { immediate: true });
 
 // Method to handle file upload success
@@ -204,9 +267,13 @@ const handleUploadSuccess = (e) => {
 // Method to handle the save button click
 const handleSave = () => {
     console.log('handleSave called, viewOnly:', props.viewOnly);
+    console.log('EditData in handleSave:', props.editData);
 
     // If in view only mode, emit event to switch to edit mode
     if (props.viewOnly) {
+        console.log('In view-only mode, switching to edit mode');
+        console.log('Emitting form data for edit:', formData.value);
+
         emit('edit', formData.value);
         return;
     }
@@ -223,64 +290,52 @@ const handleSave = () => {
         return;
     }
 
-    // Format dates to strings if they are Date objects
-    const formatDate = (date) => {
-        if (date instanceof Date) {
-            return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
-        }
-        return date;
-    };
-
-    // Prepare data for saving
-    const saveData: Partial<CompetencyOwner> = {
-        number: formData.value.number,
-        identityCardNo: formData.value.identityCardNo,
-        position: Number(formData.value.position),
-        grade: formData.value.grade,
-        officerName1: formData.value.officerName1,
-        officerName2: formData.value.officerName2,
-        getToWork: formatDate(formData.value.getToWork),
-        outOfOffice: formatDate(formData.value.outOfOffice),
-        reEnterOffice: formatDate(formData.value.reEnterOffice),
-        backToWork: formatDate(formData.value.backToWork),
-        noWhenIntroduction: formData.value.noWhenIntroduction,
-        agencyDivision: formData.value.agencyDivision,
-        status: 'Active'
-    };
-
     try {
-        // Save data depending on mode (edit or add)
-        if (props.editMode && props.editData?.was) {
-            // Update existing record
-            const success = ownerStore.updateOwnerRecord(props.editData.was, saveData);
-
-            if (success) {
-                emit('toast', {
-                    type: 'success',
-                    message: 'Record updated successfully'
-                });
-                emit('save', { ...saveData, was: props.editData.was });
-            } else {
-                emit('toast', {
-                    type: 'error',
-                    message: 'Failed to update record'
-                });
+        // Format dates to strings if they are Date objects
+        const formatDate = (date) => {
+            if (date instanceof Date) {
+                return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
             }
-        } else {
-            // Add new record
-            const newRecord = ownerStore.addOwnerRecord(saveData);
+            return date;
+        };
 
-            emit('toast', {
-                type: 'success',
-                message: 'Record added successfully'
-            });
-            emit('save', newRecord);
+        // Prepare data for saving
+        const saveData = {
+            number: formData.value.number,
+            identityCardNo: formData.value.identityCardNo,
+            position: Number(formData.value.position),
+            grade: formData.value.grade,
+            officerName1: formData.value.officerName1,
+            officerName2: formData.value.officerName2,
+            getToWork: formatDate(formData.value.getToWork),
+            outOfOffice: formatDate(formData.value.outOfOffice),
+            reEnterOffice: formatDate(formData.value.reEnterOffice),
+            backToWork: formatDate(formData.value.backToWork),
+            noWhenIntroduction: formData.value.noWhenIntroduction,
+            agencyDivision: formData.value.agencyDivision,
+            status: 'Active'
+        };
+
+        // If editing, include the original was ID
+        if (props.editMode && props.editData?.was) {
+            saveData.was = props.editData.was;
+            console.log('Including was ID in saveData:', saveData.was);
         }
+
+        // Emit the save event with the prepared data
+        console.log('Emitting save event with data:', saveData);
+        emit('save', saveData);
+
+        // Show success toast message
+        emit('toast', {
+            type: 'success',
+            message: props.editMode ? 'Record updated successfully' : 'Record added successfully'
+        });
     } catch (error) {
-        console.error('Error saving record:', error);
+        console.error('Error preparing data:', error);
         emit('toast', {
             type: 'error',
-            message: 'An error occurred while saving'
+            message: `Error: ${error.message}`
         });
     }
 };
@@ -291,13 +346,65 @@ const handleCancel = () => {
     emit('cancel');
 };
 
+// Method to handle return to list button click
+const handleReturnToList = () => {
+    console.log('Return to list button clicked');
+    emit('cancel');
+};
+
 // On component mount
 onMounted(() => {
     console.log('AddNewCompetencyOwner component mounted');
-    console.log('Props:', { editMode: props.editMode, viewOnly: props.viewOnly });
+    console.log('Props:', {
+        editMode: props.editMode,
+        viewOnly: props.viewOnly,
+        editData: props.editData
+    });
 
-    // If not editing or viewing, initialize with default dates
-    if (!props.editMode && !props.viewOnly) {
+    // For new records (editData is null) or when not in edit/view mode
+    if (props.editData === null || (!props.editMode && !props.viewOnly)) {
+        console.log('Initializing with default values for new record');
+        resetForm();
+        return;
+    }
+
+    // Only process editData if it exists and we're in edit or view mode
+    if (props.editData && (props.editMode || props.viewOnly)) {
+        console.log('EditData is available, filling form for edit/view');
+
+        // Handle date conversions for editData
+        const toDateObject = (dateStr) => {
+            if (!dateStr) return null;
+            try {
+                const date = new Date(dateStr);
+                if (!isNaN(date.getTime())) {
+                    return date;
+                }
+                return null;
+            } catch (err) {
+                console.error(`Error parsing date ${dateStr}:`, err);
+                return null;
+            }
+        };
+
+        // Fill the form with the edit data
+        formData.value = {
+            ...formData.value,
+            number: props.editData.number || '',
+            identityCardNo: props.editData.identityCardNo || '',
+            position: props.editData.position || 1,
+            grade: props.editData.grade || 'Junior',
+            officerName1: props.editData.officerName1 || '',
+            officerName2: props.editData.officerName2 || '',
+            getToWork: toDateObject(props.editData.getToWork),
+            outOfOffice: toDateObject(props.editData.outOfOffice),
+            reEnterOffice: toDateObject(props.editData.reEnterOffice),
+            backToWork: toDateObject(props.editData.backToWork),
+            noWhenIntroduction: props.editData.noWhenIntroduction || '',
+            agencyDivision: props.editData.agencyDivision || 'IT Department'
+        };
+    } else {
+        console.log('No valid editData, using default values');
         resetForm();
     }
 

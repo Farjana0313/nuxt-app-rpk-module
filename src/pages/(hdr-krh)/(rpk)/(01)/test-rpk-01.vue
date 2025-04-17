@@ -21,9 +21,9 @@
   </div>
 </template>
 <script setup lang="ts">
+import { useOwnerStore } from '@/stores/Owner/ownerStore';
 import DxButton from 'devextreme-vue/button';
-import { ref } from 'vue';
-import { sales } from '../data/tables.ts';
+import { ref, watch } from 'vue';
 import AttendanceInformationSearch from "./components/feature/records/AttendanceInformationSearch.vue";
 import CompetencyOwnerSearch from "./components/feature/records/CompetencyOwnerSearch.vue";
 import ListOfCompetencyOwnerAttendanceRecords from "./components/feature/tables/ListOfCompetencyOwnerAttendanceRecords.vue";
@@ -34,36 +34,75 @@ const showAttendanceView = ref(false);
 const selectedOwner = ref({});  // Initialize as empty object instead of null
 const filteredAttendanceData = ref([]);
 
+// Add a watcher to debug state changes
+watch(() => showAttendanceView.value, (newValue) => {
+  console.log(`View changed to: ${newValue ? 'Attendance View' : 'Main View'}`);
+  if (newValue) {
+    console.log('Selected owner is:', JSON.stringify(selectedOwner.value));
+    console.log('Filtered attendance data:', filteredAttendanceData.value.length, 'records');
+  }
+}, { immediate: true });
+
 // Function to handle viewing attendance details for an owner
 const showAttendanceInfo = (owner) => {
   console.log("Selected owner for attendance view:", owner);
+  console.log("Owner data type:", typeof owner);
+  console.log("Owner properties:", Object.keys(owner));
 
-  // Create a new object to avoid any reactivity issues
-  const ownerData = {
-    was: owner.was,
-    agencyDivision: owner.agencyDivision || '',
-    number: owner.number || '',
-    noWhenIntroduction: owner.noWhenIntroduction || '',
-    position: owner.position || 0,
-    grade: owner.grade || ''
-  };
-
-  // Set the owner data first before showing the attendance view
-  selectedOwner.value = ownerData;
-  console.log("Set selectedOwner.value to:", selectedOwner.value);
-
-  // Filter attendance data by matching the 'was' field
-  if (owner && owner.was) {
-    filteredAttendanceData.value = sales.filter(item => item.was === owner.was);
-    console.log(`Found ${filteredAttendanceData.value.length} attendance records with was=${owner.was}`);
-  } else {
-    console.warn("No 'was' property found in owner data:", owner);
-    filteredAttendanceData.value = [];
+  if (!owner) {
+    console.error("No owner data provided");
+    return;
   }
 
-  // Show the attendance view after data is set
-  setTimeout(() => {
+  try {
+    // Create a new object to avoid any reactivity issues
+    const ownerData = {
+      was: owner.was,
+      agencyDivision: owner.agencyDivision || '',
+      number: owner.number || '',
+      noWhenIntroduction: owner.noWhenIntroduction || '',
+      position: owner.position || 0,
+      grade: owner.grade || ''
+    };
+
+    console.log("Created owner data object:", ownerData);
+    console.log("WAS value:", ownerData.was, typeof ownerData.was);
+
+    // Set the owner data first before showing the attendance view
+    selectedOwner.value = ownerData;
+    console.log("Set selectedOwner.value to:", selectedOwner.value);
+
+    // Filter attendance data by matching the 'was' field
+    if (owner && owner.was) {
+      // Get the latest data from the store
+      const ownerStore = useOwnerStore();
+      // Access the store's data correctly - it's returning a ref/computed
+      const allOwners = ownerStore.owners;
+      console.log("All owners from store:", typeof allOwners, Array.isArray(allOwners));
+      console.log("Store has", Array.isArray(allOwners) ? allOwners.length : (allOwners.value ? allOwners.value.length : 0), "records");
+
+      // Ensure we're working with the array, not the ref
+      filteredAttendanceData.value = Array.isArray(allOwners)
+        ? allOwners.filter(item => item.was === owner.was)
+        : (allOwners.value ? allOwners.value.filter(item => item.was === owner.was) : []);
+
+      console.log(`Found ${filteredAttendanceData.value.length} attendance records with was=${owner.was}`);
+      console.log("Filter condition:", `was === ${owner.was}`);
+
+      if (filteredAttendanceData.value.length === 0) {
+        console.log("No attendance records found, showing empty array");
+        filteredAttendanceData.value = [];
+      }
+    } else {
+      console.warn("No 'was' property found in owner data:", owner);
+      filteredAttendanceData.value = [];
+    }
+
+    // Show the attendance view after data is set
+    console.log("Setting showAttendanceView to true");
     showAttendanceView.value = true;
-  }, 0);
+  } catch (error) {
+    console.error("Error processing owner data:", error);
+  }
 };
 </script>

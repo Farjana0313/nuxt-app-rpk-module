@@ -11,7 +11,9 @@ export const useOwnerStore = defineStore('owner', () => {
     identityCardNo: ''
   });
 
-  const owners = computed(() => filteredOwners.value);
+  const owners = computed(() => {
+    return filteredOwners.value;
+  });
 
   const filterOwners = (number: string, identityCardNo: string) => {
     filters.value = {
@@ -42,61 +44,171 @@ export const useOwnerStore = defineStore('owner', () => {
   };
 
   const addOwnerRecord = (newOwner: Partial<CompetencyOwner>) => {
-    const maxWas = Math.max(...allOwners.value.map(owner => owner.was), 0);
-    const newWas = maxWas + 1;
+    try {
+      const maxWas = Math.max(...allOwners.value.map(owner => owner.was), 0);
+      const newWas = maxWas + 1;
 
-    const newRecord: CompetencyOwner = {
-      was: newWas,
-      getToWork: newOwner.getToWork || '',
-      outOfOffice: newOwner.outOfOffice || '',
-      reEnterOffice: newOwner.reEnterOffice || '',
-      backToWork: newOwner.backToWork || '',
-      officerName1: newOwner.officerName1 || '',
-      officerName2: newOwner.officerName2 || '',
-      number: newOwner.number || `CP-${new Date().getFullYear()}-${String(newWas).padStart(3, '0')}`,
-      noWhenIntroduction: newOwner.noWhenIntroduction || '',
-      status: 'Active',
-      agencyDivision: newOwner.agencyDivision || '',
-      position: newOwner.position || 1,
-      grade: newOwner.grade || '',
-      identityCardNo: newOwner.identityCardNo || '',
-    };
+      const newRecord: CompetencyOwner = {
+        was: newWas,
+        getToWork: newOwner.getToWork || '',
+        outOfOffice: newOwner.outOfOffice || '',
+        reEnterOffice: newOwner.reEnterOffice || '',
+        backToWork: newOwner.backToWork || '',
+        officerName1: newOwner.officerName1 || '',
+        officerName2: newOwner.officerName2 || '',
+        number: newOwner.number || `CP-${new Date().getFullYear()}-${String(newWas).padStart(3, '0')}`,
+        noWhenIntroduction: newOwner.noWhenIntroduction || '',
+        status: newOwner.status || 'Active',
+        agencyDivision: newOwner.agencyDivision || '',
+        position: newOwner.position || 1,
+        grade: newOwner.grade || '',
+        identityCardNo: newOwner.identityCardNo || '',
+      };
 
-    allOwners.value.push(newRecord);
-    filteredOwners.value = [...allOwners.value];
+      // Add the new record to the array
+      allOwners.value.push(newRecord);
+      
+      // Update filtered owners to include the new record
+      // If we have active filters, apply them
+      if (filters.value.number || filters.value.identityCardNo) {
+        const matchesNumber = !filters.value.number || 
+                          newRecord.number.toLowerCase().includes(filters.value.number.toLowerCase());
+        const matchesIdentity = !filters.value.identityCardNo || 
+                           newRecord.noWhenIntroduction.toLowerCase().includes(filters.value.identityCardNo.toLowerCase());
+        
+        if (matchesNumber && matchesIdentity) {
+          filteredOwners.value.push(newRecord);
+        }
+      } else {
+        // No filters, update the filtered list with all owners
+        filteredOwners.value = [...allOwners.value];
+      }
 
-    return newRecord;
+      console.log('New record added:', newRecord);
+      console.log('Updated allOwners length:', allOwners.value.length);
+      console.log('Updated filteredOwners length:', filteredOwners.value.length);
+
+      return newRecord;
+    } catch (error) {
+      console.error('Error adding owner record:', error);
+      throw error;
+    }
   };
 
   const updateOwnerRecord = (wasId: number, updatedData: Partial<CompetencyOwner>) => {
-    const index = allOwners.value.findIndex(owner => owner.was === wasId);
-    
-    if (index !== -1) {
-      allOwners.value[index] = {
-        ...allOwners.value[index],
-        ...updatedData,
-        was: wasId
-      };
+    try {
+      console.log('Updating record with wasId:', wasId);
+      console.log('Update data received:', updatedData);
       
-      const filteredIndex = filteredOwners.value.findIndex(owner => owner.was === wasId);
-      if (filteredIndex !== -1) {
-        filteredOwners.value[filteredIndex] = { ...allOwners.value[index] };
+      // Find the record in the allOwners array
+      const index = allOwners.value.findIndex(owner => owner.was === wasId);
+      console.log('Found matching record at index:', index);
+      
+      if (index !== -1) {
+        // Preserve the original was ID to ensure we don't change it
+        const originalWas = allOwners.value[index].was;
+        
+        // Update the record in the main data array
+        allOwners.value[index] = {
+          ...allOwners.value[index],
+          ...updatedData,
+          was: originalWas // Ensure we keep the original was value
+        };
+        
+        console.log('Updated record in allOwners:', allOwners.value[index]);
+        
+        // Update the record in the filtered array if it exists there
+        const filteredIndex = filteredOwners.value.findIndex(owner => owner.was === wasId);
+        console.log('Found in filteredOwners at index:', filteredIndex);
+        
+        if (filteredIndex !== -1) {
+          filteredOwners.value[filteredIndex] = { ...allOwners.value[index] };
+          console.log('Updated filteredOwners record');
+        } else {
+          console.log('Record not found in filteredOwners, might need to add it');
+          
+          // Check if the updated record matches the current filters
+          if (shouldIncludeInFiltered(allOwners.value[index])) {
+            filteredOwners.value.push({ ...allOwners.value[index] });
+            console.log('Added record to filteredOwners after update');
+          }
+        }
+        
+        console.log('Record updated successfully:', allOwners.value[index]);
+        return true;
       }
       
-      return true;
+      console.warn('Record not found for update:', wasId);
+      return false;
+    } catch (error) {
+      console.error('Error updating owner record:', error);
+      return false;
+    }
+  };
+  
+  // Helper function to check if a record should be included in filtered results
+  const shouldIncludeInFiltered = (record: CompetencyOwner) => {
+    if (!filters.value.number && !filters.value.identityCardNo) {
+      return true; // No filters, include all records
     }
     
-    return false;
+    const matchesNumber = !filters.value.number || 
+                      (record.number && record.number.toLowerCase().includes(filters.value.number.toLowerCase()));
+    const matchesIdentity = !filters.value.identityCardNo || 
+                       (record.noWhenIntroduction && record.noWhenIntroduction.toLowerCase().includes(filters.value.identityCardNo.toLowerCase()));
+    
+    return matchesNumber && matchesIdentity;
   };
 
   const deleteOwnerRecord = (wasId: number) => {
     try {
+      console.log('Attempting to delete record with wasId:', wasId);
+      console.log('Current allOwners count:', allOwners.value.length);
+      console.log('Current filteredOwners count:', filteredOwners.value.length);
+      
+      if (!wasId && wasId !== 0) {
+        console.error('Invalid wasId for deletion:', wasId);
+        return false;
+      }
+      
+      // Find the record in allOwners
       const index = allOwners.value.findIndex(owner => owner.was === wasId);
+      console.log('Found record at index:', index);
+      
       if (index !== -1) {
+        // Found the record, delete it from allOwners
+        console.log('Deleting record from allOwners:', allOwners.value[index]);
         allOwners.value.splice(index, 1);
-        filteredOwners.value = allOwners.value.filter(owner => owner.was !== wasId);
+        console.log('allOwners count after deletion:', allOwners.value.length);
+        
+        // Remove from filteredOwners as well
+        const filteredIndex = filteredOwners.value.findIndex(owner => owner.was === wasId);
+        console.log('Found in filteredOwners at index:', filteredIndex);
+        
+        if (filteredIndex !== -1) {
+          console.log('Removing from filteredOwners');
+          filteredOwners.value.splice(filteredIndex, 1);
+        } else {
+          console.log('Record not found in filteredOwners, refreshing entire filteredOwners');
+          // Apply current filters to refresh filteredOwners
+          if (filters.value.number || filters.value.identityCardNo) {
+            filteredOwners.value = allOwners.value.filter(owner => {
+              const matchesNumber = !filters.value.number || 
+                                  owner.number.toLowerCase().includes(filters.value.number.toLowerCase());
+              const matchesIdentity = !filters.value.identityCardNo || 
+                                   owner.noWhenIntroduction.toLowerCase().includes(filters.value.identityCardNo.toLowerCase());
+              return matchesNumber && matchesIdentity;
+            });
+          } else {
+            filteredOwners.value = [...allOwners.value];
+          }
+        }
+        
+        console.log('filteredOwners count after deletion:', filteredOwners.value.length);
         return true;
       }
+      
+      console.warn('Record with wasId', wasId, 'not found for deletion');
       return false;
     } catch (error) {
       console.error("Error deleting owner record:", error);
