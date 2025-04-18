@@ -4,6 +4,7 @@ import { sales } from '../../pages/(hdr-krh)/(rpk)/data/tables';
 import type { CompetencyOwner, CompetencyOwnerFilter } from './types/types';
 
 export const useOwnerStore = defineStore('owner', () => {
+  // Search filters
   const allOwners = ref<CompetencyOwner[]>(sales);
   const filteredOwners = ref<CompetencyOwner[]>(sales);
   const filters = ref<CompetencyOwnerFilter>({
@@ -42,7 +43,7 @@ export const useOwnerStore = defineStore('owner', () => {
     };
     filteredOwners.value = allOwners.value;
   };
-
+// Add new owner record
   const addOwnerRecord = (newOwner: Partial<CompetencyOwner>) => {
     try {
       const maxWas = Math.max(...allOwners.value.map(owner => owner.was), 0);
@@ -94,7 +95,7 @@ export const useOwnerStore = defineStore('owner', () => {
       throw error;
     }
   };
-
+// Update existing owner record
   const updateOwnerRecord = (wasId: number, updatedData: Partial<CompetencyOwner>) => {
     try {
       console.log('Updating record with wasId:', wasId);
@@ -159,7 +160,7 @@ export const useOwnerStore = defineStore('owner', () => {
     
     return matchesNumber && matchesIdentity;
   };
-
+// Delete owner record
   const deleteOwnerRecord = (wasId: number) => {
     try {
       console.log('Attempting to delete record with wasId:', wasId);
@@ -215,7 +216,7 @@ export const useOwnerStore = defineStore('owner', () => {
       return false;
     }
   };
-
+// Get owner by was ID
   const getOwnerByWas = (wasId: number) => {
     return allOwners.value.find(owner => owner.was === wasId) || null;
   };

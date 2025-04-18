@@ -16,7 +16,12 @@
           onClick: handlePrint,
         }" />
       </DxToolbar>
-
+<DxEditing
+        mode="popup"
+        :allowUpdating="true"
+        allowUpdating="true"
+        allowAdding="true"
+        allowDeleting="true"/>
       <DxColumn :width="90" data-field="was" caption="Was" />
       <DxColumn data-field="agencyDivision" caption="Agency/ Division" />
       <DxColumn :width="180" data-field="number" caption="Number" />
@@ -52,6 +57,7 @@ import {
   DxSearchPanel,
   DxSelection,
   DxToolbar,
+  DxEditing,
   type DxDataGridTypes
 } from 'devextreme-vue/data-grid';
 import themes from 'devextreme/ui/themes';
